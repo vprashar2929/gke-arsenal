@@ -1,0 +1,38 @@
+# macOS / editor noise
+.DS_Store
+*.swp
+*~
+
+# Local secrets / env overrides
+.env
+.env.*
+local/
+/examples/client/
+
+# ---------------------------------------------------------------------------
+# Operational inputs and scanner outputs (real cluster topology).
+# Commit only example.tsv or *.example.tsv templates — never live cutover data.
+# ---------------------------------------------------------------------------
+*.tsv
+!**/example.tsv
+!**/*.example.tsv
+
+# ---------------------------------------------------------------------------
+# Generated manifests (SQL logins, import lists, etc.).
+# Commit only *.example.* templates under manifests/.
+# ---------------------------------------------------------------------------
+**/manifests/*
+!**/manifests/.gitignore
+!**/manifests/*.example
+!**/manifests/*.example.*
+
+# Default import-manifest filename when --output is omitted
+db-import-manifest.txt
+sqlserver-logins-create.sql
+
+# ---------------------------------------------------------------------------
+# Downloaded artifacts
+# ---------------------------------------------------------------------------
+fetch-bucket-reports/downloads/
+fetch-kafka-messages/messages/
+**/downloads/

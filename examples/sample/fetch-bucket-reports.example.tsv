@@ -1,0 +1,8 @@
+# UIDs to fetch from the GCS bucket.
+# One UID per line. Lines starting with # and blank lines are ignored.
+#
+# Example UIDs (placeholder values — replace with real report UIDs locally):
+
+00000000-0000-4000-8000-000000000001
+00000000-0000-4000-8000-000000000002
+00000000-0000-4000-8000-000000000003

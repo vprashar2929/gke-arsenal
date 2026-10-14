@@ -1,0 +1,50 @@
+# Synthetic values only. Copy and edit for your environment before use.
+# Each script reads only its own section.
+# Relative paths resolve against this YAML file's directory.
+restart_deployment:
+  context: example-cluster
+  namespace: example-namespace
+  deployments:
+    - example-api
+    - example-worker
+  timeout: 10m
+  tail: 40
+
+reset_redis_cache:
+  context: example-cluster
+  namespace: example-namespace
+  secret_project: example-project
+  secret_name: example-redis-config
+  mode: flushdb
+  db: 0
+
+fetch_kafka_messages:
+  context: example-cluster
+  kafka_namespace: example-messaging
+  kafka_service: kafka-ui
+  kafka_cluster: Example Cluster
+  topic: example-topic
+  remote_port: 8080
+  limit: 20
+  output: ../../local/runs/messages.json
+
+fix_istio_cross_cluster_san:
+  context: example-cluster
+  namespace: example-namespace
+  apps_context: example-peer-cluster
+  rollout_timeout: 3m
+  resync_wait: 20
+
+rsync_external_secrets:
+  input: rsync-external-secrets.targets.example.tsv
+  wait_timeout: 2m
+  poll_interval: 5
+
+fetch_bucket_reports:
+  input: fetch-bucket-reports.example.tsv
+  gcs_path: gs://example-reports-bucket/reports
+  output: ../../local/runs/downloads
+
+move_financial_report_files:
+  source: gs://example-source/reports/files
+  dest: gs://example-dest/reports/files
