@@ -13,12 +13,12 @@ Run the examples below from the `reset-redis-cache/` directory.
 
 ## Configuration
 
-Pass `--config-file=FILE` to read the `reset_redis_cache` section.
-CLI flags override YAML. See the [config reference](../examples/sample/README.md)
-for fields, requirements, and path resolution.
+Pass `--config-file=FILE` to read this tool's settings. The adjacent
+[config.yml](./config.yml) contains synthetic examples. CLI flags override YAML.
+See [configuration](../README.md#configuration) for requirements and path resolution.
 
 ```sh
-./reset-redis-cache.sh --config-file=../examples/sample/config.yaml
+./reset-redis-cache.sh --config-file=./config.yml
 ```
 
 ## Usage

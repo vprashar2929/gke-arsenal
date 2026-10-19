@@ -25,16 +25,16 @@ declare KAFKA_NAMESPACE=""
 declare KAFKA_SERVICE=""
 declare KAFKA_CLUSTER=""
 declare TOPIC=""
-declare PARTITION="0"
-declare LIMIT="20"
-declare SEEK="latest"
+declare PARTITION=""
+declare LIMIT=""
+declare SEEK=""
 declare START_OFFSET=""
 declare OFFSET_EXPLICIT="false"
-declare LOCAL_PORT="18080"
-declare REMOTE_PORT="80"
-declare TIMEOUT="60"
+declare LOCAL_PORT=""
+declare REMOTE_PORT=""
+declare TIMEOUT=""
 declare OUTPUT=""
-declare SUMMARY="false"
+declare SUMMARY=""
 declare EXECUTE="false"
 
 declare PORT_FORWARD_PID=""
@@ -46,9 +46,6 @@ declare SEEK_OFFSET=""
 
 # shellcheck source=../hack/utils.bash
 source "$SCRIPT_DIR/../hack/utils.bash"
-
-# shellcheck source=../hack/config.bash
-source "$SCRIPT_DIR/../hack/config.bash"
 
 usage() {
 	cat <<USAGE
@@ -262,11 +259,21 @@ PY
 }
 
 parse_args() {
-	load_config "fetch_kafka_messages" "$@"
-	set -- ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"}
+	local config_file=""
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--config-file)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${2:?missing value for --config-file}"
+			shift 2
+			;;
+		--config-file=*)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${1#*=}"
+			[[ -n "$config_file" ]] || die "--config-file requires a file path"
+			shift
+			;;
 		--project)
 			PROJECT="${2:?missing value for --project}"
 			shift 2
@@ -281,7 +288,6 @@ parse_args() {
 			;;
 		--context)
 			CONTEXT="${2:?missing value for --context}"
-			CONTEXT_EXPLICIT="true"
 			shift 2
 			;;
 		--kafka-namespace)
@@ -314,7 +320,6 @@ parse_args() {
 			;;
 		--offset)
 			START_OFFSET="${2:?missing value for --offset}"
-			OFFSET_EXPLICIT="true"
 			shift 2
 			;;
 		--remote-port)
@@ -351,6 +356,43 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if [[ -n "$config_file" ]]; then
+		load_config "$config_file" \
+			context project cluster region kafka_namespace kafka_service \
+			kafka_cluster topic partition limit seek offset \
+			local_port remote_port timeout output summary
+		# CLI derivation fields take precedence over a saved context.
+		if [[ -z "$PROJECT$CLUSTER$REGION" ]]; then
+			CONTEXT="${CONTEXT:-$(config_value context)}"
+		fi
+		PROJECT="${PROJECT:-$(config_value project)}"
+		CLUSTER="${CLUSTER:-$(config_value cluster)}"
+		REGION="${REGION:-$(config_value region)}"
+		KAFKA_NAMESPACE="${KAFKA_NAMESPACE:-$(config_value kafka_namespace)}"
+		KAFKA_SERVICE="${KAFKA_SERVICE:-$(config_value kafka_service)}"
+		KAFKA_CLUSTER="${KAFKA_CLUSTER:-$(config_value kafka_cluster)}"
+		TOPIC="${TOPIC:-$(config_value topic)}"
+		PARTITION="${PARTITION:-$(config_value partition)}"
+		LIMIT="${LIMIT:-$(config_value limit)}"
+		SEEK="${SEEK:-$(config_value seek)}"
+		START_OFFSET="${START_OFFSET:-$(config_value offset)}"
+		LOCAL_PORT="${LOCAL_PORT:-$(config_value local_port)}"
+		REMOTE_PORT="${REMOTE_PORT:-$(config_value remote_port)}"
+		TIMEOUT="${TIMEOUT:-$(config_value timeout)}"
+		OUTPUT="${OUTPUT:-$(config_value output path)}"
+		SUMMARY="${SUMMARY:-$(config_value summary bool)}"
+	fi
+	if [[ -n "$CONTEXT" ]]; then CONTEXT_EXPLICIT="true"; fi
+	if [[ -n "$START_OFFSET" ]]; then OFFSET_EXPLICIT="true"; fi
+
+	PARTITION="${PARTITION:-0}"
+	LIMIT="${LIMIT:-20}"
+	SEEK="${SEEK:-latest}"
+	LOCAL_PORT="${LOCAL_PORT:-18080}"
+	REMOTE_PORT="${REMOTE_PORT:-80}"
+	TIMEOUT="${TIMEOUT:-60}"
+	SUMMARY="${SUMMARY:-false}"
 }
 
 main() {

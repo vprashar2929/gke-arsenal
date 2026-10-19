@@ -1,0 +1,3 @@
+# Synthetic values. Copy and edit for your environment.
+source: gs://example-source/reports/files
+dest: gs://example-dest/reports/files

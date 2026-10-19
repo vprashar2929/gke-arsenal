@@ -26,28 +26,39 @@ and `jq`. Direct flags and `--help` work without the YAML dependencies.
 
 ## Configuration
 
-All tools accept `--config-file=FILE` (or `--config-file FILE`). Each
-script reads its own section from the YAML file. CLI flags override YAML;
-input and output paths in YAML resolve relative to that file. See the
-[config reference](./examples/sample/README.md) for supported fields.
+Each tool contains a sample `config.yml` beside its script and README.
+Pass a config with `--config-file=FILE` (or `--config-file FILE`). Files are
+loaded only when explicitly supplied. CLI flags override YAML.
 
-Templates in [`examples/sample/`](./examples/sample/) contain synthetic values.
-Copy the inputs you need and edit them for your environment:
+The committed configs contain synthetic values. For local settings, copy the
+sample to `config.local.yml` in the same folder; that filename is ignored by Git:
 
 ```sh
-mkdir -p local/example
-cp examples/sample/config.yaml local/example/config.yaml
-cp examples/sample/*.tsv local/example/
+cp restart-deployment/config.yml restart-deployment/config.local.yml
 # Edit the YAML and required TSV inputs before running.
 ./restart-deployment/restart-deployment.sh \
-  --config-file=./local/example/config.yaml
+  --config-file=./restart-deployment/config.local.yml
 ```
 
-Include only the sections needed for your workload. YAML contains resource
-identifiers and secret references; supply credential values through the tools'
-authentication mechanisms. The `local/` directory is ignored by Git and can
-hold configuration and generated output. Arbitrary output paths are not
-automatically ignored; see [`.gitignore`](./.gitignore).
+Each config contains top-level fields for one tool. Field names match CLI
+flags with hyphens replaced by underscores, except `deployments`, which is a
+list of names for the repeatable `--deployment` flag. Supplying that flag on
+the CLI replaces the YAML list. Each tool's README documents its flags.
+
+YAML `input` and `output` paths resolve relative to the config file. CLI paths
+resolve relative to the working directory. Example TSV inputs sit beside the
+scripts; copy them to a local `.tsv` filename before editing.
+
+Use one YAML mapping document. Unknown fields, duplicate keys, empty values,
+nulls, and control characters are rejected before cloud commands run. Scalars
+accept strings or numbers; paths must be strings. Lists contain strings, and
+booleans use YAML `true` or `false`. Values are read as data and are never
+executed as shell code or expanded as environment variables.
+
+YAML contains resource identifiers and secret references; supply credential
+values through the tools' authentication mechanisms. The `local/` directory is
+ignored by Git and can hold configuration and generated output. Arbitrary
+output paths are not automatically ignored; see [`.gitignore`](./.gitignore).
 
 CLI flags also work on their own:
 
@@ -61,6 +72,10 @@ The restart, Redis, and Kafka tools accept an existing `--context` or all three
 of `--project`, `--cluster`, and `--region` (a region or zone). They require
 explicit resource names and do not fetch cluster credentials automatically.
 Other tools take their targets from their own flags or TSV inputs.
+
+For tools that derive a context, CLI `--project`, `--cluster`, or `--region`
+selects derivation instead of a saved YAML context. Supply all three values
+in YAML or on the CLI.
 
 ## Execution
 
@@ -87,4 +102,4 @@ shfmt -ln bash -i 0 -d */*.sh hack/*.bash
 ```
 
 Repository conventions for contributors and coding agents are in
-[`CLAUDE.md`](./CLAUDE.md), also available as [`AGENTS.md`](./AGENTS.md).
+[`AGENTS.md`](./AGENTS.md).

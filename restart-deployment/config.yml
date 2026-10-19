@@ -1,0 +1,8 @@
+# Synthetic values. Copy and edit for your environment.
+context: example-cluster
+namespace: example-namespace
+deployments:
+  - example-api
+  - example-worker
+timeout: 10m
+tail: 40

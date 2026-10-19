@@ -21,12 +21,12 @@ Run the examples below from the `move-financial-report-files/` directory.
 
 ## Configuration
 
-Pass `--config-file=FILE` to read the `move_financial_report_files` section.
-CLI flags override YAML. See the [config reference](../examples/sample/README.md)
-for fields, requirements, and path resolution.
+Pass `--config-file=FILE` to read this tool's settings. The adjacent
+[config.yml](./config.yml) contains synthetic examples. CLI flags override YAML.
+See [configuration](../README.md#configuration) for requirements and path resolution.
 
 ```sh
-./move-financial-report-files.sh --config-file=../examples/sample/config.yaml
+./move-financial-report-files.sh --config-file=./config.yml
 ```
 
 ## Usage

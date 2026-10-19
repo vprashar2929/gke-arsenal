@@ -21,9 +21,6 @@ declare YES="false"
 # shellcheck source=../hack/utils.bash
 source "$SCRIPT_DIR/../hack/utils.bash"
 
-# shellcheck source=../hack/config.bash
-source "$SCRIPT_DIR/../hack/config.bash"
-
 usage() {
 	cat <<USAGE
 ${SCRIPT_NAME}: download files from a GCS bucket for each UID in an input file.
@@ -68,11 +65,21 @@ require_cmd() {
 }
 
 parse_args() {
-	load_config "fetch_bucket_reports" "$@"
-	set -- ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"}
+	local config_file=""
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--config-file)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${2:?missing value for --config-file}"
+			shift 2
+			;;
+		--config-file=*)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${1#*=}"
+			[[ -n "$config_file" ]] || die "--config-file requires a file path"
+			shift
+			;;
 		--input)
 			INPUT="${2:?missing value for --input}"
 			shift 2
@@ -99,6 +106,13 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if [[ -n "$config_file" ]]; then
+		load_config "$config_file" input gcs_path output
+		INPUT="${INPUT:-$(config_value input path)}"
+		GCS_PATH="${GCS_PATH:-$(config_value gcs_path)}"
+		OUTPUT="${OUTPUT:-$(config_value output path)}"
+	fi
 }
 
 main() {

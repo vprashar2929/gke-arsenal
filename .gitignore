@@ -6,6 +6,7 @@
 # Local secrets / env overrides
 .env
 .env.*
+config.local.yml
 local/
 /examples/client/
 

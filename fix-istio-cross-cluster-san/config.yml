@@ -1,0 +1,6 @@
+# Synthetic values. Copy and edit for your environment.
+context: example-cluster
+namespace: example-namespace
+apps_context: example-peer-cluster
+rollout_timeout: 3m
+resync_wait: 20

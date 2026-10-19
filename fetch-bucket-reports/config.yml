@@ -1,0 +1,4 @@
+# Synthetic values. Copy and edit for your environment.
+input: fetch-bucket-reports.example.tsv
+gcs_path: gs://example-reports-bucket/reports
+output: downloads

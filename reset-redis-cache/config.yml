@@ -1,0 +1,7 @@
+# Synthetic values. Copy and edit for your environment.
+context: example-cluster
+namespace: example-namespace
+secret_project: example-project
+secret_name: example-redis-config
+mode: flushdb
+db: 0
