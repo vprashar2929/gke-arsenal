@@ -109,3 +109,60 @@ wait_until() {
 
 	return $ret
 }
+
+# Read one flat YAML mapping. The caller supplies its allowed field names.
+load_config() {
+	local file="$1" version json
+	shift
+	[[ "$file" != *[[:cntrl:]]* ]] || die "config paths must not contain control characters"
+	[[ -f "$file" ]] || die "config file not found: $file"
+	command -v yq >/dev/null 2>&1 || die "--config-file requires Mike Farah yq v4"
+	command -v jq >/dev/null 2>&1 || die "--config-file requires jq"
+	version="$(yq --version 2>/dev/null)" || die "could not determine yq version"
+	[[ "$version" == *"github.com/mikefarah/yq/"* && "$version" == *"version v4."* ]] ||
+		die "--config-file requires Mike Farah yq v4"
+	CONFIG_DIR="$(cd -- "$(dirname -- "$file")" && pwd -P)"
+	[[ "$CONFIG_DIR" != *[[:cntrl:]]* ]] || die "config paths must not contain control characters"
+	file="$CONFIG_DIR/$(basename -- "$file")"
+
+	# Preserve mapping keys to detect duplicates; suppress excerpts of private data.
+	json="$(yq eval -p=yaml -o=json -I=0 '{"data": ., "keys": keys}' "$file" 2>/dev/null)" ||
+		die "invalid YAML config: $file"
+	CONFIG_JSON="$(jq -sc --args '
+    def text_ok:
+      length > 0 and (test("[\u0000-\u001f\u007f]") | not);
+    def value_ok:
+      if type == "string" then text_ok
+      elif type == "number" or type == "boolean" then true
+      elif type == "array" then length > 0 and all(.[]; type == "string" and text_ok)
+      else false end;
+    if length != 1 or (.[0].data | type) != "object" then
+      error("config must contain exactly one YAML mapping")
+    elif (.[0].keys | length != (unique | length)) then
+      error("duplicate config fields are not allowed")
+    else .[0].data end
+    | if ((keys - $ARGS.positional) | length) > 0 then
+        error("unknown config field; use the documented fields for this tool")
+      elif (all(.[]; value_ok) | not) then
+        error("config values must be nonempty scalars or lists of strings without control characters")
+      else . end
+  ' "$@" <<<"$json")" || die "invalid config settings: $file"
+
+	info "Config: $file"
+}
+
+# Missing fields return nothing so the script can apply its own defaults.
+config_value() {
+	local key="$1" kind="${2:-scalar}"
+	jq -r --arg key "$key" --arg kind "$kind" --arg dir "$CONFIG_DIR" '
+    if has($key) then
+      .[$key]
+      | if $kind == "list" and type == "array" then .[]
+        elif $kind == "bool" and type == "boolean" then tostring
+        elif $kind == "path" and type == "string" then
+          if startswith("/") then . else $dir + "/" + . end
+        elif $kind == "scalar" and (type == "string" or type == "number") then tostring
+        else error("invalid type for config field " + $key) end
+    else empty end
+  ' <<<"$CONFIG_JSON" || die "could not read config field: $key"
+}

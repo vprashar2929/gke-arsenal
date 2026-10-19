@@ -25,12 +25,12 @@ Without `--yes`, no message payloads are retrieved.
 
 ## Configuration
 
-Pass `--config-file=FILE` to read the `fetch_kafka_messages` section.
-CLI flags override YAML. See the [config reference](../examples/sample/README.md)
-for fields, requirements, and path resolution.
+Pass `--config-file=FILE` to read this tool's settings. The adjacent
+[config.yml](./config.yml) contains synthetic examples. CLI flags override YAML.
+See [configuration](../README.md#configuration) for requirements and path resolution.
 
 ```sh
-./fetch-kafka-messages.sh --config-file=../examples/sample/config.yaml
+./fetch-kafka-messages.sh --config-file=./config.yml
 ```
 
 ## Usage

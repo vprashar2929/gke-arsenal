@@ -20,8 +20,8 @@ declare CONTEXT=""
 declare CONTEXT_EXPLICIT="false"
 declare SECRET_NAME=""
 declare SECRET_PROJECT=""
-declare MODE="flushall"
-declare REDIS_DB="0"
+declare MODE=""
+declare REDIS_DB=""
 declare DB_EXPLICIT="false"
 declare EXECUTE="false"
 
@@ -31,9 +31,6 @@ declare REDIS_PASSWORD=""
 
 # shellcheck source=../hack/utils.bash
 source "$SCRIPT_DIR/../hack/utils.bash"
-
-# shellcheck source=../hack/config.bash
-source "$SCRIPT_DIR/../hack/config.bash"
 
 usage() {
 	cat <<USAGE
@@ -174,11 +171,21 @@ delete_probe_pod() {
 }
 
 parse_args() {
-	load_config "reset_redis_cache" "$@"
-	set -- ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"}
+	local config_file=""
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--config-file)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${2:?missing value for --config-file}"
+			shift 2
+			;;
+		--config-file=*)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${1#*=}"
+			[[ -n "$config_file" ]] || die "--config-file requires a file path"
+			shift
+			;;
 		--project)
 			PROJECT="${2:?missing value for --project}"
 			shift 2
@@ -197,7 +204,6 @@ parse_args() {
 			;;
 		--context)
 			CONTEXT="${2:?missing value for --context}"
-			CONTEXT_EXPLICIT="true"
 			shift 2
 			;;
 		--secret-name)
@@ -214,7 +220,6 @@ parse_args() {
 			;;
 		--db)
 			REDIS_DB="${2:?missing value for --db}"
-			DB_EXPLICIT="true"
 			shift 2
 			;;
 		--yes)
@@ -231,6 +236,29 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if [[ -n "$config_file" ]]; then
+		load_config "$config_file" \
+			context namespace project cluster region secret_project \
+			secret_name mode db
+		# CLI derivation fields take precedence over a saved context.
+		if [[ -z "$PROJECT$CLUSTER$REGION" ]]; then
+			CONTEXT="${CONTEXT:-$(config_value context)}"
+		fi
+		NAMESPACE="${NAMESPACE:-$(config_value namespace)}"
+		PROJECT="${PROJECT:-$(config_value project)}"
+		CLUSTER="${CLUSTER:-$(config_value cluster)}"
+		REGION="${REGION:-$(config_value region)}"
+		SECRET_PROJECT="${SECRET_PROJECT:-$(config_value secret_project)}"
+		SECRET_NAME="${SECRET_NAME:-$(config_value secret_name)}"
+		MODE="${MODE:-$(config_value mode)}"
+		REDIS_DB="${REDIS_DB:-$(config_value db)}"
+	fi
+	if [[ -n "$CONTEXT" ]]; then CONTEXT_EXPLICIT="true"; fi
+	if [[ -n "$REDIS_DB" ]]; then DB_EXPLICIT="true"; fi
+
+	MODE="${MODE:-flushall}"
+	REDIS_DB="${REDIS_DB:-0}"
 }
 
 main() {

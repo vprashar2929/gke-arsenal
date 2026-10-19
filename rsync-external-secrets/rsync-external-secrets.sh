@@ -14,16 +14,13 @@ declare -r SCRIPT_NAME SCRIPT_DIR
 
 # config
 declare INPUT=""
-declare WAIT_TIMEOUT="2m"
-declare POLL_INTERVAL="5"
+declare WAIT_TIMEOUT=""
+declare POLL_INTERVAL=""
 declare EXECUTE="false"
 declare DRY_RUN="false"
 
 # shellcheck source=../hack/utils.bash
 source "$SCRIPT_DIR/../hack/utils.bash"
-
-# shellcheck source=../hack/config.bash
-source "$SCRIPT_DIR/../hack/config.bash"
 
 usage() {
 	cat <<USAGE
@@ -49,13 +46,13 @@ Optional flags:
 
 Examples:
   Plan a targeted refresh:
-    ./${SCRIPT_NAME} --input ../examples/sample/rsync-external-secrets.targets.example.tsv
+    ./${SCRIPT_NAME} --input ./rsync-external-secrets.targets.example.tsv
 
   Force the refresh and wait for every target to reconcile:
     ./${SCRIPT_NAME} --input local-targets.tsv --yes
 
   Force every ExternalSecret in one namespace (two-column config):
-    ./${SCRIPT_NAME} --input ../examples/sample/rsync-external-secrets.example.tsv --yes
+    ./${SCRIPT_NAME} --input ./rsync-external-secrets.example.tsv --yes
 
 Notes:
   - The script never reads or prints Secret values.
@@ -126,11 +123,21 @@ wait_for_refresh() {
 }
 
 parse_args() {
-	load_config "rsync_external_secrets" "$@"
-	set -- ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"}
+	local config_file=""
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--config-file)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${2:?missing value for --config-file}"
+			shift 2
+			;;
+		--config-file=*)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${1#*=}"
+			[[ -n "$config_file" ]] || die "--config-file requires a file path"
+			shift
+			;;
 		--input)
 			INPUT="${2:?missing value for --input}"
 			shift 2
@@ -161,6 +168,16 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if [[ -n "$config_file" ]]; then
+		load_config "$config_file" input wait_timeout poll_interval
+		INPUT="${INPUT:-$(config_value input path)}"
+		WAIT_TIMEOUT="${WAIT_TIMEOUT:-$(config_value wait_timeout)}"
+		POLL_INTERVAL="${POLL_INTERVAL:-$(config_value poll_interval)}"
+	fi
+
+	WAIT_TIMEOUT="${WAIT_TIMEOUT:-2m}"
+	POLL_INTERVAL="${POLL_INTERVAL:-5}"
 }
 
 main() {

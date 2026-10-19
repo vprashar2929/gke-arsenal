@@ -18,16 +18,13 @@ declare NAMESPACE=""
 declare REGION=""
 declare CONTEXT=""
 declare CONTEXT_EXPLICIT="false"
-declare TIMEOUT="10m"
-declare SINCE="10m"
-declare TAIL="40"
+declare TIMEOUT=""
+declare SINCE=""
+declare TAIL=""
 declare EXECUTE="false"
 
 # shellcheck source=../hack/utils.bash
 source "$SCRIPT_DIR/../hack/utils.bash"
-
-# shellcheck source=../hack/config.bash
-source "$SCRIPT_DIR/../hack/config.bash"
 
 usage() {
 	cat <<USAGE
@@ -74,11 +71,21 @@ validate_k8s_name() {
 }
 
 parse_args() {
-	load_config "restart_deployment" "$@"
-	set -- ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"}
+	local config_file="" configured_deployments deployment
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--config-file)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${2:?missing value for --config-file}"
+			shift 2
+			;;
+		--config-file=*)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${1#*=}"
+			[[ -n "$config_file" ]] || die "--config-file requires a file path"
+			shift
+			;;
 		--deployment)
 			DEPLOYMENTS+=("${2:?missing value for --deployment}")
 			shift 2
@@ -101,7 +108,6 @@ parse_args() {
 			;;
 		--context)
 			CONTEXT="${2:?missing value for --context}"
-			CONTEXT_EXPLICIT="true"
 			shift 2
 			;;
 		--timeout)
@@ -130,6 +136,36 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if [[ -n "$config_file" ]]; then
+		load_config "$config_file" \
+			context namespace project cluster region deployments \
+			timeout since tail
+		# CLI derivation fields take precedence over a saved context.
+		if [[ -z "$PROJECT$CLUSTER$REGION" ]]; then
+			CONTEXT="${CONTEXT:-$(config_value context)}"
+		fi
+		NAMESPACE="${NAMESPACE:-$(config_value namespace)}"
+		PROJECT="${PROJECT:-$(config_value project)}"
+		CLUSTER="${CLUSTER:-$(config_value cluster)}"
+		REGION="${REGION:-$(config_value region)}"
+		if [[ ${#DEPLOYMENTS[@]} -eq 0 ]]; then
+			configured_deployments="$(config_value deployments list)"
+			if [[ -n "$configured_deployments" ]]; then
+				while IFS= read -r deployment; do
+					DEPLOYMENTS+=("$deployment")
+				done <<<"$configured_deployments"
+			fi
+		fi
+		TIMEOUT="${TIMEOUT:-$(config_value timeout)}"
+		SINCE="${SINCE:-$(config_value since)}"
+		TAIL="${TAIL:-$(config_value tail)}"
+	fi
+	if [[ -n "$CONTEXT" ]]; then CONTEXT_EXPLICIT="true"; fi
+
+	TIMEOUT="${TIMEOUT:-10m}"
+	SINCE="${SINCE:-10m}"
+	TAIL="${TAIL:-40}"
 }
 
 main() {

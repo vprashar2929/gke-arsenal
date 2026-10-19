@@ -20,12 +20,12 @@ Without `--yes` the script only lists the objects that would be fetched.
 
 ## Configuration
 
-Pass `--config-file=FILE` to read the `fetch_bucket_reports` section.
-CLI flags override YAML. See the [config reference](../examples/sample/README.md)
-for fields, requirements, and path resolution.
+Pass `--config-file=FILE` to read this tool's settings. The adjacent
+[config.yml](./config.yml) contains synthetic examples. CLI flags override YAML.
+See [configuration](../README.md#configuration) for requirements and path resolution.
 
 ```sh
-./fetch-bucket-reports.sh --config-file=../examples/sample/config.yaml
+./fetch-bucket-reports.sh --config-file=./config.yml
 ```
 
 ## Usage
@@ -55,7 +55,7 @@ patterns, whitespace, and control characters are rejected.
 00000000-0000-4000-8000-000000000002
 ```
 
-See [`fetch-bucket-reports.example.tsv`](../examples/sample/fetch-bucket-reports.example.tsv) for a ready-to-edit starting point.
+See [`fetch-bucket-reports.example.tsv`](./fetch-bucket-reports.example.tsv) for a ready-to-edit starting point.
 
 ## Examples
 
@@ -63,7 +63,7 @@ Dry run — list what would be downloaded:
 
 ```sh
 ./fetch-bucket-reports.sh \
-  --input ../examples/sample/fetch-bucket-reports.example.tsv \
+  --input ./fetch-bucket-reports.example.tsv \
   --gcs-path gs://example-reports-bucket/reports \
   --output ./downloads
 ```
@@ -72,7 +72,7 @@ Download the matching files:
 
 ```sh
 ./fetch-bucket-reports.sh \
-  --input ../examples/sample/fetch-bucket-reports.example.tsv \
+  --input ./fetch-bucket-reports.example.tsv \
   --gcs-path gs://example-reports-bucket/reports \
   --output ./downloads \
   --yes

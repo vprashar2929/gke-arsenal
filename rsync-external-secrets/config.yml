@@ -1,0 +1,4 @@
+# Synthetic values. Copy and edit for your environment.
+input: rsync-external-secrets.targets.example.tsv
+wait_timeout: 2m
+poll_interval: 5

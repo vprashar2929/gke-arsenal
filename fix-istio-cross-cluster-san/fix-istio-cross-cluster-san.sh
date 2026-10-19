@@ -16,19 +16,16 @@ declare CONTEXT=""
 declare APPS_CONTEXT=""
 declare NAMESPACE=""
 declare POD=""
-declare ROLLOUT_TIMEOUT="3m"
-declare RESYNC_WAIT="20"
+declare ROLLOUT_TIMEOUT=""
+declare RESYNC_WAIT=""
 declare PROBE_HOST=""
 declare PROBE_IP=""
-declare PROBE_PATH="/"
+declare PROBE_PATH=""
 declare ESCALATE="false"
 declare EXECUTE="false"
 
 # shellcheck source=../hack/utils.bash
 source "$SCRIPT_DIR/../hack/utils.bash"
-
-# shellcheck source=../hack/config.bash
-source "$SCRIPT_DIR/../hack/config.bash"
 
 usage() {
 	cat <<USAGE
@@ -180,11 +177,21 @@ verify_and_probe() {
 }
 
 parse_args() {
-	load_config "fix_istio_cross_cluster_san" "$@"
-	set -- ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"}
+	local config_file=""
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--config-file)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${2:?missing value for --config-file}"
+			shift 2
+			;;
+		--config-file=*)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${1#*=}"
+			[[ -n "$config_file" ]] || die "--config-file requires a file path"
+			shift
+			;;
 		--context)
 			CONTEXT="${2:?missing value for --context}"
 			shift 2
@@ -239,6 +246,25 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if [[ -n "$config_file" ]]; then
+		load_config "$config_file" \
+			context namespace apps_context pod rollout_timeout resync_wait \
+			probe_host probe_ip probe_path
+		CONTEXT="${CONTEXT:-$(config_value context)}"
+		NAMESPACE="${NAMESPACE:-$(config_value namespace)}"
+		APPS_CONTEXT="${APPS_CONTEXT:-$(config_value apps_context)}"
+		POD="${POD:-$(config_value pod)}"
+		ROLLOUT_TIMEOUT="${ROLLOUT_TIMEOUT:-$(config_value rollout_timeout)}"
+		RESYNC_WAIT="${RESYNC_WAIT:-$(config_value resync_wait)}"
+		PROBE_HOST="${PROBE_HOST:-$(config_value probe_host)}"
+		PROBE_IP="${PROBE_IP:-$(config_value probe_ip)}"
+		PROBE_PATH="${PROBE_PATH:-$(config_value probe_path)}"
+	fi
+
+	ROLLOUT_TIMEOUT="${ROLLOUT_TIMEOUT:-3m}"
+	RESYNC_WAIT="${RESYNC_WAIT:-20}"
+	PROBE_PATH="${PROBE_PATH:-/}"
 }
 
 main() {

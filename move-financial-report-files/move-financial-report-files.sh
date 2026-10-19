@@ -17,14 +17,11 @@ declare SOURCE_PATH=""
 declare DEST_PATH=""
 declare YES="false"
 declare DELETE_SOURCE="false"
-declare SUMMARIZE="false"
-declare SHOW_RSYNC_PLAN="false"
+declare SUMMARIZE=""
+declare SHOW_RSYNC_PLAN=""
 
 # shellcheck source=../hack/utils.bash
 source "$SCRIPT_DIR/../hack/utils.bash"
-
-# shellcheck source=../hack/config.bash
-source "$SCRIPT_DIR/../hack/config.bash"
 
 usage() {
 	cat <<USAGE
@@ -65,11 +62,21 @@ require_cmd() {
 }
 
 parse_args() {
-	load_config "move_financial_report_files" "$@"
-	set -- ${CONFIG_ARGS[@]+"${CONFIG_ARGS[@]}"}
+	local config_file=""
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+		--config-file)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${2:?missing value for --config-file}"
+			shift 2
+			;;
+		--config-file=*)
+			[[ -z "$config_file" ]] || die "--config-file may only be supplied once"
+			config_file="${1#*=}"
+			[[ -n "$config_file" ]] || die "--config-file requires a file path"
+			shift
+			;;
 		--source)
 			SOURCE_PATH="${2:?missing value for --source}"
 			shift 2
@@ -104,6 +111,17 @@ parse_args() {
 			;;
 		esac
 	done
+
+	if [[ -n "$config_file" ]]; then
+		load_config "$config_file" source dest summarize show_rsync_plan
+		SOURCE_PATH="${SOURCE_PATH:-$(config_value source)}"
+		DEST_PATH="${DEST_PATH:-$(config_value dest)}"
+		SUMMARIZE="${SUMMARIZE:-$(config_value summarize bool)}"
+		SHOW_RSYNC_PLAN="${SHOW_RSYNC_PLAN:-$(config_value show_rsync_plan bool)}"
+	fi
+
+	SUMMARIZE="${SUMMARIZE:-false}"
+	SHOW_RSYNC_PLAN="${SHOW_RSYNC_PLAN:-false}"
 }
 
 main() {

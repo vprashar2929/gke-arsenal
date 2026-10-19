@@ -1,0 +1,9 @@
+# Synthetic values. Copy and edit for your environment.
+context: example-cluster
+kafka_namespace: example-messaging
+kafka_service: kafka-ui
+kafka_cluster: Example Cluster
+topic: example-topic
+remote_port: 8080
+limit: 20
+output: messages/messages.json

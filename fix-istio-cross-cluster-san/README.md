@@ -40,12 +40,12 @@ optional HTTP probe runs before and after the restart.
 
 ## Configuration
 
-Pass `--config-file=FILE` to read the `fix_istio_cross_cluster_san` section.
-CLI flags override YAML. See the [config reference](../examples/sample/README.md)
-for fields, requirements, and path resolution.
+Pass `--config-file=FILE` to read this tool's settings. The adjacent
+[config.yml](./config.yml) contains synthetic examples. CLI flags override YAML.
+See [configuration](../README.md#configuration) for requirements and path resolution.
 
 ```sh
-./fix-istio-cross-cluster-san.sh --config-file=../examples/sample/config.yaml
+./fix-istio-cross-cluster-san.sh --config-file=./config.yml
 ```
 
 ## Usage

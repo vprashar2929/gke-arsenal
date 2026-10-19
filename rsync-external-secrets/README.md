@@ -29,12 +29,12 @@ with [`restart-deployment`](../restart-deployment/) for those workloads.
 
 ## Configuration
 
-Pass `--config-file=FILE` to read the `rsync_external_secrets` section.
-CLI flags override YAML. See the [config reference](../examples/sample/README.md)
-for fields, requirements, and path resolution.
+Pass `--config-file=FILE` to read this tool's settings. The adjacent
+[config.yml](./config.yml) contains synthetic examples. CLI flags override YAML.
+See [configuration](../README.md#configuration) for requirements and path resolution.
 
 ```sh
-./rsync-external-secrets.sh --config-file=../examples/sample/config.yaml
+./rsync-external-secrets.sh --config-file=./config.yml
 ```
 
 ## Usage
@@ -69,8 +69,8 @@ example-test-cluster    app-test
 ```
 
 The displayed spacing illustrates the columns; actual config files must use tabs.
-See [`rsync-external-secrets.example.tsv`](../examples/sample/rsync-external-secrets.example.tsv) for namespace-wide targets and
-[`rsync-external-secrets.targets.example.tsv`](../examples/sample/rsync-external-secrets.targets.example.tsv) for individually selected targets.
+See [`rsync-external-secrets.example.tsv`](./rsync-external-secrets.example.tsv) for namespace-wide targets and
+[`rsync-external-secrets.targets.example.tsv`](./rsync-external-secrets.targets.example.tsv) for individually selected targets.
 All examples are synthetic; copy and replace their values before use.
 
 ## Examples
@@ -78,16 +78,15 @@ All examples are synthetic; copy and replace their values before use.
 Prepare a local list and inspect its plan:
 
 ```sh
-mkdir -p ../local
-cp ../examples/sample/rsync-external-secrets.targets.example.tsv ../local/eso-targets.tsv
-# Edit ../local/eso-targets.tsv for your context, namespace, and ExternalSecrets.
-./rsync-external-secrets.sh --input ../local/eso-targets.tsv
+cp ./rsync-external-secrets.targets.example.tsv ./targets.tsv
+# Edit ./targets.tsv for your context, namespace, and ExternalSecrets.
+./rsync-external-secrets.sh --input ./targets.tsv
 ```
 
 Force refresh and wait for the targets:
 
 ```sh
-./rsync-external-secrets.sh --input ../local/eso-targets.tsv --yes
+./rsync-external-secrets.sh --input ./targets.tsv --yes
 ```
 
 For pods consuming Secrets as environment variables, restart the relevant
